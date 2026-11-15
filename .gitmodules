@@ -1,0 +1,3 @@
+[submodule "vSuite.Core"]
+	path = vSuite.Core
+	url = ../vSuite.Core.git

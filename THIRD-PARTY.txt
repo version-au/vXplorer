@@ -1,0 +1,17 @@
+vXplorer uses these, with thanks:
+
+vSuite.Core - the suite's shared library (theme, windows, updates)
+  (c) 2026 Steven (version-au) - https://github.com/version-au/vSuite.Core
+  Licence: MIT.
+
+Vanara - Windows Shell access
+  (c) David Hall - https://github.com/dahall/Vanara
+  Licence: MIT.
+
+VirtualizingWrapPanel - the icon views
+  (c) S. Bäumlisberger - https://github.com/sbaeumlisberger/VirtualizingWrapPanel
+  Licence: MIT.
+
+.NET - the runtime built into the app
+  (c) .NET Foundation and Contributors - https://dotnet.microsoft.com
+  Licence: MIT.
