@@ -2,6 +2,15 @@
 
 Automated (no window): `dotnet test tests\vXplorer.Tests` - run after every change to `src\Core`.
 
+## 0.1.57: file operations that could lose files
+1. `dotnet test tests\vXplorer.Tests`: passes (`ResumeTests`, `ZipPathTests.Extract_all_never_writes_beside_its_folder`).
+2. Finishing later: move a few thousand small files to another drive, close vXplorer while it runs > Stop and close, start it > Move the rest. Every file is in one place or the other afterwards - count them (before: the file named in the journal, already moved, was deleted). The log says "removed the half-written …" only for a file that really was cut short (its source is still there and differs).
+3. The same with a copy where one item was Keep both, stopped while that item was next: the file that was already there (the one you kept) is still there.
+4. Search, select two results in different folders (a\x.txt, b\y.txt), right-click > Show more options: the status line says "Windows' menu works on items in one folder at a time - these are in different folders" and no menu shows. vXplorer's own Delete / Cut / Copy on them work on the right files. Alt+Enter (Properties): one window per folder. Items in one folder: Windows' menu as before.
+5. Undo a merge: D:\Backup\Photos holds files; copy another Photos folder into D:\Backup > Replace (merge), then Ctrl+Z: "There's nothing to undo" (or the step before) - D:\Backup\Photos and everything in it stay. Copied together with a loose file: Ctrl+Z takes back only the loose file. A folder copied where there was none: Ctrl+Z takes it back as before. The same with a move.
+6. Try again: copy report.docx into a folder that has one > Keep both, with the source locked so it fails (open in Word); close Word > Try again: "report (2).docx" appears and the old report.docx is unchanged.
+7. Extract all on a zip with an entry named "..\<zipname>-private\a.txt": nothing is written outside the new folder.
+
 ## 0.1.56: apps' items on the folder's right-click menu. Right-click the empty part of a folder > Show more options (or Shift+right-click): Open in vTerm opens vTerm in that folder; Open in
    vXplorer opens it in a new vXplorer window; another app's item (Open with Code, Git Bash Here …) works too. Before: "Windows' menu
    couldn't be shown: No application is associated with the specified file for this operation".. Right-click a folder in the list > Show more options > Open in vTerm / Open in vXplorer: opens that folder.. Windows' own items there (New, Paste, Properties, Sort by …) still work.

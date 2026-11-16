@@ -1,5 +1,13 @@
 # Changelog
 
+## 0.1.57
+
+- Finishing a copy or move that stopped part way no longer deletes a file that had already made it across (after a move, the only copy).
+- Windows' menu (Show more options) on search results from different folders no longer acts on same-named files in the first one's folder: it says they're in different folders. Properties shows each folder's items.
+- Undo after copying or moving a folder into one of the same name leaves that folder alone - it used to take everything that was already in it too.
+- Try again on a failed "Keep both" item keeps both again, instead of replacing the one you kept.
+- Extracting a zip can't write into a folder beside the one it extracts to.
+
 ## 0.1.56 · release
 
 - Open in vTerm, Open in vXplorer and other apps' items on a folder's right-click menu work again (they said no app was associated).
