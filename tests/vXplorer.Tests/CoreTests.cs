@@ -178,6 +178,28 @@ namespace vXplorer.Tests
         }
     }
 
+    public class NetworkAwayTests
+    {
+        [Fact]
+        public void A_network_place_that_does_not_answer_is_only_waited_for_once()
+        {
+            Assert.Null(vXplorer.Core.Paths.NetworkRoot(Path.GetTempPath()));                         // this PC's own drive
+            Assert.Equal(@"\\nas\media", vXplorer.Core.Paths.NetworkRoot(@"\\nas\media\films\a"));
+            Assert.True(vXplorer.Core.Paths.FolderThere(Path.GetTempPath()));
+
+            string gone = @"\\192.0.2.1\nothing\folder";                                              // an address nothing answers on
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            Assert.False(vXplorer.Core.Paths.FolderThere(gone));
+            Assert.True(clock.Elapsed.TotalSeconds < 8, "the first look took " + clock.Elapsed.TotalSeconds + " s");
+            if (vXplorer.Core.Paths.Away(gone))                                                       // it timed out (not refused at once)
+            {
+                clock.Restart();
+                Assert.False(vXplorer.Core.Paths.FolderThere(@"\\192.0.2.1\nothing\another"));
+                Assert.True(clock.Elapsed.TotalMilliseconds < 500, "the second look waited again");
+            }
+        }
+    }
+
     public class ResumeTests
     {
         [Fact]

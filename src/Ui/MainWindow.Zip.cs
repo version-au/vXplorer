@@ -38,7 +38,11 @@ namespace vXplorer.Ui
             EmptyText.Text = error ?? "This folder of the zip is empty.";
             EmptyText.Visibility = list.Count == 0 ? System.Windows.Visibility.Visible : System.Windows.Visibility.Collapsed;
             if (select != null)
-                foreach (FileItem it in _items) if (select.Contains(it.Path)) Files.SelectedItems.Add(it);
+            {
+                _selecting = true;
+                try { foreach (FileItem it in _items) if (select.Contains(it.Path)) Files.SelectedItems.Add(it); }
+                finally { _selecting = false; }
+            }
             UpdateStatus();
             SchedulePreview();
             foreach (FileItem it in list)
@@ -58,10 +62,30 @@ namespace vXplorer.Ui
             catch (Exception ex) { Status("vXplorer couldn't take that out of the zip: " + ex.Message); return new List<string>(); }
         }
 
-        /// <summary>Open files from inside a zip: extracted to a temporary folder, then opened with their programs.</summary>
-        void OpenFromZip(IList<FileItem> files)
+        /// <summary>
+        /// The same in the background (Open, Copy): the window stays usable while a big file comes out. (A drag out of a zip still
+        /// takes its files out as it starts - Windows needs them there the moment the drag begins.)
+        /// </summary>
+        async System.Threading.Tasks.Task<List<string>> ExtractToTempAsync(IList<FileItem> items)
         {
-            foreach (string p in ExtractToTemp(files.Take(15).ToList()))
+            string zip, inner;
+            if (items.Count == 0 || !ZipFolders.TrySplit(_current, out zip, out inner)) return new List<string>();
+            string prefix = inner.Length == 0 ? "" : inner.TrimEnd('/') + "/";
+            List<string> inners = items.Select(i => prefix + i.Name).ToList();
+            Status("Taking " + (items.Count == 1 ? items[0].Name : items.Count + " items") + " out of the zip…");
+            try
+            {
+                List<string> made = await System.Threading.Tasks.Task.Run(() => ZipFolders.Extract(zip, inners, ZipFolders.TempFolder()));
+                Status("");
+                return made;
+            }
+            catch (Exception ex) { Status("vXplorer couldn't take that out of the zip: " + ex.Message); return new List<string>(); }
+        }
+
+        /// <summary>Open files from inside a zip: extracted to a temporary folder, then opened with their programs.</summary>
+        async void OpenFromZip(IList<FileItem> files)
+        {
+            foreach (string p in await ExtractToTempAsync(files.Take(15).ToList()))
             {
                 try { Process.Start(new ProcessStartInfo(p) { UseShellExecute = true, WorkingDirectory = Path.GetDirectoryName(p) }); }
                 catch (Exception ex) { Status("Couldn't open " + Path.GetFileName(p) + ": " + ex.Message); }

@@ -39,7 +39,7 @@ namespace vXplorer.Ui
         bool InThisPc { get { return IsThisPc(_current); } }
 
         /// <summary>A folder that's there, or This PC / Network / a computer (a computer that's gone says so when it's read).</summary>
-        static bool PlaceExists(string p) { return IsPlace(p) || (p != null && Directory.Exists(p)); }
+        static bool PlaceExists(string p) { return IsPlace(p) || (p != null && Paths.FolderThere(p)); }
 
         /// <summary>The name shown for a place (tab, title, breadcrumbs).</summary>
         static string NameOf(string p)

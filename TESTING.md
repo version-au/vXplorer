@@ -2,6 +2,13 @@
 
 Automated (no window): `dotnet test tests\vXplorer.Tests` - run after every change to `src\Core`.
 
+## 0.1.57: speed
+1. `dotnet test tests\vXplorer.Tests`: passes (`NetworkAwayTests` - takes about 4 s).
+2. A folder with 20,000 files: Ctrl+A, then F5, a click on a column header, and a change of view: each is done in a moment and the status line shows the whole selection's count and size.
+3. Pin a folder on a NAS and leave a tab on it; close vXplorer, switch the NAS off (or block it), start vXplorer: the window is usable within about 4 seconds; the pin is listed (by its folder name), the tab on it is left out; the log says "<place> didn't answer within 4 seconds". Clicking the pin: "vXplorer can't find …". NAS back on: within a quarter of a minute everything on it works again. With the NAS on throughout: nothing changes.
+4. While a folder on the NAS is open, take the NAS away and press F5: "<place> isn't answering - showing what was there" (it used to jump to another folder after a long wait).
+5. In a zip with a big file (1 GB+): double-click it, and Ctrl+C on it: "Taking … out of the zip…" shows and the window stays usable; the file opens / can be pasted when it is out. Dragging it out still waits while it is taken out.
+
 ## 0.1.57: file operations that could lose files
 1. `dotnet test tests\vXplorer.Tests`: passes (`ResumeTests`, `ZipPathTests.Extract_all_never_writes_beside_its_folder`).
 2. Finishing later: move a few thousand small files to another drive, close vXplorer while it runs > Stop and close, start it > Move the rest. Every file is in one place or the other afterwards - count them (before: the file named in the journal, already moved, was deleted). The log says "removed the half-written …" only for a file that really was cut short (its source is still there and differs).

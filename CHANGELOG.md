@@ -7,6 +7,9 @@
 - Undo after copying or moving a folder into one of the same name leaves that folder alone - it used to take everything that was already in it too.
 - Try again on a failed "Keep both" item keeps both again, instead of replacing the one you kept.
 - Extracting a zip can't write into a folder beside the one it extracts to.
+- A refresh or sort with thousands of files selected no longer freezes the window.
+- Starting with pinned folders or saved tabs on a NAS that is off (or a VPN that is down) no longer holds the window for a minute: a network place is waited for 4 seconds, once.
+- Opening or copying a big file out of a zip no longer freezes the window while it is taken out.
 
 ## 0.1.56 · release
 

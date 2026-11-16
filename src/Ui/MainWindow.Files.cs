@@ -223,15 +223,16 @@ namespace vXplorer.Ui
             return data;
         }
 
-        void ToClipboard(bool cut)
+        async void ToClipboard(bool cut)
         {
             List<string> paths = SelectedPaths();
             if (paths.Count == 0) return;
             if (_inZip)
             {
-                // out of a zip: copies, taken out to a temporary folder (nothing can be cut out of a zip)
+                // out of a zip: copies, taken out to a temporary folder (nothing can be cut out of a zip) - in the background,
+                // a big file takes a while
                 cut = false;
-                paths = ExtractToTemp(Files.SelectedItems.Cast<FileItem>().ToList());
+                paths = await ExtractToTempAsync(Files.SelectedItems.Cast<FileItem>().ToList());
                 if (paths.Count == 0) return;
             }
             DataObject data = FileData(paths, cut ? DragDropEffects.Move : DragDropEffects.Copy | DragDropEffects.Link);

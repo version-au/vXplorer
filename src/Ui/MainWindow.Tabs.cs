@@ -190,9 +190,10 @@ namespace vXplorer.Ui
 
         static string NearestExisting(string path)
         {
+            if (Paths.Away(path)) return HomeFolder;      // its network place isn't answering: every folder above it would be waited for too
             DirectoryInfo d = null;
             try { d = Directory.GetParent(path); } catch { }
-            while (d != null && !d.Exists) d = d.Parent;
+            while (d != null && !Paths.FolderThere(d.FullName)) d = d.Parent;
             return d != null ? d.FullName : HomeFolder;
         }
 

@@ -389,8 +389,14 @@ namespace vXplorer.Ui
             _renameNext = null;
             if (select != null)
             {
-                foreach (FileItem it in _items)
-                    if (select.Contains(it.Path)) Files.SelectedItems.Add(it);
+                // one status update for the lot (below), not one per item - 20,000 selected files froze the window for seconds
+                _selecting = true;
+                try
+                {
+                    foreach (FileItem it in _items)
+                        if (select.Contains(it.Path)) Files.SelectedItems.Add(it);
+                }
+                finally { _selecting = false; }
                 if (scrollTo && Files.SelectedItem != null)
                 {
                     Files.ScrollIntoView(Files.SelectedItem);
@@ -424,12 +430,16 @@ namespace vXplorer.Ui
             if (_current == null) return;
             if (_renaming != null) { _refreshPending = true; return; }   // reloading would throw the typing away
             if (InPlace) { Load(null, false); return; }   // This PC, Network, a computer: look again
-            if (Searching && Directory.Exists(_current)) { RerunSearch(); return; }
-            if (!Directory.Exists(_current))
+            // (on the network the answer is waited for a few seconds at most - Paths.FolderThere)
+            bool there = FolderThere(_current);
+            if (Searching && there) { RerunSearch(); return; }
+            if (!there)
             {
+                // its network place isn't answering just now: what's shown stays (a refresh later, or going there again, looks again)
+                if (Away(_current)) { Status(NetworkRoot(_current) + " isn't answering - showing what was there."); return; }
                 // the folder went away: go to the nearest one that's still there
                 DirectoryInfo d = Directory.GetParent(_current);
-                while (d != null && !d.Exists) d = d.Parent;
+                while (d != null && !FolderThere(d.FullName)) d = d.Parent;
                 if (d != null) Navigate(d.FullName, false);
                 return;
             }
@@ -484,7 +494,11 @@ namespace vXplorer.Ui
             RememberFolderView();
             var keep = Files.SelectedItems.Cast<FileItem>().ToList();
             ShowItems();
-            foreach (FileItem f in keep) Files.SelectedItems.Add(f);
+            _selecting = true;
+            try { foreach (FileItem f in keep) Files.SelectedItems.Add(f); }
+            finally { _selecting = false; }
+            UpdateStatus();
+            SchedulePreview();
         }
 
         /// <summary>Each column's header: its name, and the arrow on the one the list is sorted by.</summary>
@@ -514,9 +528,12 @@ namespace vXplorer.Ui
             }
         }
 
+        /// <summary>A selection is being put back item by item: the status line and preview follow once, at the end.</summary>
+        bool _selecting;
+
         void Files_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (_banding) return;   // the selection box updates the status once per move, not per item
+            if (_banding || _selecting) return;   // the selection box updates the status once per move, not per item
             UpdateStatus();
             SchedulePreview();
         }
@@ -777,7 +794,17 @@ namespace vXplorer.Ui
         {
             var quick = new List<FolderNode>();
             foreach (string p in QuickFolders())
-                if (!string.IsNullOrEmpty(p) && Directory.Exists(p)) quick.Add(new FolderNode(Native.DisplayName(p), p, 0));
+            {
+                if (string.IsNullOrEmpty(p)) continue;
+                // a pinned folder on the network is listed without asking the network (a NAS that's off held the window up at
+                // start); it says so when it's opened and can't be found
+                if (NetworkRoot(p) != null)
+                {
+                    string plain = Path.GetFileName(p.TrimEnd('\\'));
+                    quick.Add(new FolderNode(FolderThere(p) ? Native.DisplayName(p) : plain.Length > 0 ? plain : p, p, 0));
+                }
+                else if (Directory.Exists(p)) quick.Add(new FolderNode(Native.DisplayName(p), p, 0));
+            }
             QuickTree.ItemsSource = quick;
             if (NetTree.ItemsSource == null) BuildNetworkTree();   // kept across rebuilds: no new search for computers
             _sidebarSig = SidebarSignature();
