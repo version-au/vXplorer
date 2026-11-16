@@ -154,6 +154,75 @@ namespace vXplorer.Tests
                 Assert.False(ZipFolders.TrySplit("::{20D04FE0-3AEA-1069-A2D8-08002B30309D}", out z, out inner));   // This PC
             }
         }
+
+        [Fact]
+        public void Extract_all_never_writes_beside_its_folder()
+        {
+            using (var t = new TempFolder())
+            {
+                string zip = Path.Combine(t.Path, "photos.zip");
+                using (ZipArchive a = ZipFile.Open(zip, ZipArchiveMode.Create))
+                {
+                    using (var w = new StreamWriter(a.CreateEntry("in.txt").Open())) w.Write("in");
+                    using (var w = new StreamWriter(a.CreateEntry("../photos-private/out.txt").Open())) w.Write("out");
+                    using (var w = new StreamWriter(a.CreateEntry("../photos.pdf.exe").Open())) w.Write("out");
+                }
+                string folder = ZipFolders.ExtractAll(zip);
+                Assert.True(File.Exists(Path.Combine(folder, "in.txt")));
+                Assert.False(Directory.Exists(Path.Combine(t.Path, "photos-private")));   // its name starts like the folder's
+                Assert.False(File.Exists(Path.Combine(t.Path, "photos.pdf.exe")));
+                Assert.True(ZipFolders.Within(@"C:\x\photos\a.txt", @"C:\x\photos"));
+                Assert.True(ZipFolders.Within(@"C:\x\photos", @"C:\x\photos\"));
+                Assert.False(ZipFolders.Within(@"C:\x\photos-private\a.txt", @"C:\x\photos"));
+            }
+        }
+    }
+
+    public class ResumeTests
+    {
+        [Fact]
+        public void Only_a_really_half_written_file_is_removed_when_a_copy_is_finished_later()
+        {
+            using (var t = new TempFolder())
+            {
+                string src = Path.Combine(t.Path, "src"), dest = Path.Combine(t.Path, "dest");
+                Directory.CreateDirectory(Path.Combine(src, "Album"));
+                Directory.CreateDirectory(Path.Combine(dest, "Album"));
+                string a = Path.Combine(src, "a.txt"), inAlbum = Path.Combine(src, "Album", "p.jpg");
+                File.WriteAllText(a, "the whole file");
+                File.WriteAllText(inAlbum, "the whole picture");
+                var j = new CopyJournal { Kind = "move", Dest = dest, Sources = { a, Path.Combine(src, "Album") } };
+
+                // half there: shorter than its source
+                j.Current = Path.Combine(dest, "a.txt");
+                File.WriteAllText(j.Current, "the wh");
+                Assert.True(vXplorer.Ui.MainWindow.HalfWritten(j));
+
+                // finished since the journal was last saved (a move: the source has gone) - the only copy, never removed
+                File.Delete(a);
+                File.WriteAllText(j.Current, "the whole file");
+                Assert.False(vXplorer.Ui.MainWindow.HalfWritten(j));
+
+                // inside a folder: compared with the file at the same place in the source folder
+                j.Current = Path.Combine(dest, "Album", "p.jpg");
+                File.WriteAllText(j.Current, "the who");
+                Assert.True(vXplorer.Ui.MainWindow.HalfWritten(j));
+                File.Copy(inAlbum, j.Current, true);
+                Assert.False(vXplorer.Ui.MainWindow.HalfWritten(j));                     // the same file: complete
+
+                // a Keep both item got a new name: the file of its own name is the one that was kept
+                string b = Path.Combine(src, "b.txt");
+                File.WriteAllText(b, "new");
+                File.WriteAllText(Path.Combine(dest, "b.txt"), "the one to keep");
+                j.Sources.Add(b); j.KeepBoth.Add(b);
+                j.Current = Path.Combine(dest, "b.txt");
+                Assert.False(vXplorer.Ui.MainWindow.HalfWritten(j));
+
+                j.Current = Path.Combine(t.Path, "elsewhere.txt");                       // not in the destination at all
+                File.WriteAllText(j.Current, "x");
+                Assert.False(vXplorer.Ui.MainWindow.HalfWritten(j));
+            }
+        }
     }
 
     public class SettingsTests

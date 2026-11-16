@@ -317,6 +317,15 @@ namespace vXplorer.Ui
                 }
             }
             UndoStep step = null;
+            // folders that go into a folder of the same name that's already there (a merge): undo must leave those alone - taking
+            // "the copy" back would take everything that was in that folder before with it
+            var merged = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (string s in list)
+            {
+                if (keepBoth != null && keepBoth.Contains(s)) continue;
+                string there = Path.Combine(dest, Path.GetFileName(s.TrimEnd('\\')));
+                if (Directory.Exists(s) && Directory.Exists(there)) merged.Add(there);
+            }
             Operation op = _ops.Transfer(list, dest, move, keepBoth, replace, r =>
             {
                 if (fromCut && r.Error == null)
@@ -324,7 +333,7 @@ namespace vXplorer.Ui
                     TryClipboard(() => Clipboard.Clear());
                     _cutPaths.Clear();
                 }
-                step = RememberOperation(move ? UndoKind.Move : UndoKind.Copy, r);
+                step = RememberOperation(move ? UndoKind.Move : UndoKind.Copy, r, merged);
                 AfterOperation(r);
             });
             LinkUndo(op, () => step);
@@ -704,7 +713,9 @@ namespace vXplorer.Ui
         void ShowProperties(IList<string> paths)
         {
             if (paths.Count == 0 || paths[0] == null) return;
-            WithShellMenu(paths, menu => menu.InvokeVerb("properties", ShowWindowCommand.SW_SHOWNORMAL, new HWND(_hwnd)));
+            // search results can be in different folders: Windows shows properties for one folder's items at a time
+            foreach (var g in paths.Where(p => p != null).GroupBy(p => Path.GetDirectoryName(p.TrimEnd('\\')) ?? "", StringComparer.OrdinalIgnoreCase))
+                WithShellMenu(g.ToList(), menu => menu.InvokeVerb("properties", ShowWindowCommand.SW_SHOWNORMAL, new HWND(_hwnd)));
         }
 
         /// <summary>
@@ -717,6 +728,13 @@ namespace vXplorer.Ui
         {
             var pidls = new List<IntPtr>();
             object folder = null, ui = null;
+            // Windows' menu works in one folder: the items are handed over as names in the first one's folder, so items from other
+            // folders (search results) would be taken for same-named items there - the wrong files deleted, cut or sent
+            if (paths.Select(p => Path.GetDirectoryName(p.TrimEnd('\\')) ?? "").Distinct(StringComparer.OrdinalIgnoreCase).Count() > 1)
+            {
+                Status("Windows' menu works on items in one folder at a time - these are in different folders.");
+                return;
+            }
             try
             {
                 foreach (string p in paths)

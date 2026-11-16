@@ -105,7 +105,7 @@ namespace vXplorer.Core
                         string to = rest.Length == 0 ? target : Path.Combine(target, rest.Replace('/', '\\'));
                         // never outside the target (a zip with "..\" names)
                         string fullTo = Path.GetFullPath(to);
-                        if (!fullTo.StartsWith(Path.GetFullPath(target), StringComparison.OrdinalIgnoreCase)) continue;
+                        if (!Within(fullTo, Path.GetFullPath(target))) continue;
                         if (full.EndsWith("/")) { Directory.CreateDirectory(fullTo); continue; }
                         Directory.CreateDirectory(Path.GetDirectoryName(fullTo));
                         e.ExtractToFile(fullTo, false);
@@ -117,6 +117,14 @@ namespace vXplorer.Core
                 }
             }
             return made;
+        }
+
+        /// <summary>Is path the folder itself or inside it? ("photos-private" isn't inside "photos" - a plain StartsWith said it was.)</summary>
+        public static bool Within(string path, string folder)
+        {
+            folder = folder.TrimEnd('\\');
+            return string.Equals(path.TrimEnd('\\'), folder, StringComparison.OrdinalIgnoreCase) ||
+                   path.StartsWith(folder + "\\", StringComparison.OrdinalIgnoreCase);
         }
 
         static bool Under(string entry, string inner)
@@ -139,7 +147,7 @@ namespace vXplorer.Core
                 foreach (ZipArchiveEntry e in zip.Entries)
                 {
                     string to = Path.GetFullPath(Path.Combine(folder, e.FullName.Replace('/', '\\')));
-                    if (!to.StartsWith(root, StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!Within(to, root)) continue;
                     if (e.FullName.EndsWith("/") || e.FullName.EndsWith("\\")) { Directory.CreateDirectory(to); continue; }
                     Directory.CreateDirectory(Path.GetDirectoryName(to));
                     e.ExtractToFile(to, true);

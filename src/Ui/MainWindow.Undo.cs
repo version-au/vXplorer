@@ -45,14 +45,16 @@ namespace vXplorer.Ui
         }
 
         /// <summary>Note what an operation did so Ctrl+Z can take it back.</summary>
-        UndoStep RememberOperation(UndoKind kind, FileOps.Result r)
+        /// <summary>merged: destination folders that were there before and were merged into - not undone (what was in them stays).</summary>
+        UndoStep RememberOperation(UndoKind kind, FileOps.Result r, ICollection<string> merged = null)
         {
             var step = new UndoStep { Kind = kind, Started = r.Started };
+            Func<Tuple<string, string>, bool> ours = p => merged == null || !merged.Contains(p.Item2);
             switch (kind)
             {
                 case UndoKind.Rename: step.Pairs.AddRange(r.Pairs); step.What = "rename"; break;
-                case UndoKind.Move: step.Pairs.AddRange(r.Pairs); step.What = "move"; break;
-                case UndoKind.Copy: step.Paths.AddRange(r.Pairs.Select(p => p.Item2)); step.What = "copy"; break;
+                case UndoKind.Move: step.Pairs.AddRange(r.Pairs.Where(ours)); step.What = "move"; break;
+                case UndoKind.Copy: step.Paths.AddRange(r.Pairs.Where(ours).Select(p => p.Item2)); step.What = "copy"; break;
                 case UndoKind.Recycle: step.Paths.AddRange(r.Deleted); step.What = "delete"; break;
             }
             Remember(step);

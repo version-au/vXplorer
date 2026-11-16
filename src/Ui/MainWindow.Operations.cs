@@ -116,6 +116,28 @@ namespace vXplorer.Ui
         }
 
         /// <summary>
+        /// Is the journal's Current file really a half-written copy? Only when it's inside the destination, the source it was being
+        /// made from (the top-level item of its name, or the file at the same place inside that folder) is still there, isn't a
+        /// "Keep both" item (those got a new name - the file of this name is the one that was kept), and differs in size or time.
+        /// </summary>
+        public static bool HalfWritten(CopyJournal j)
+        {
+            try
+            {
+                if (string.IsNullOrEmpty(j.Current) || !Inside(j.Current, j.Dest) || !File.Exists(j.Current)) return false;
+                if (j.Sources.Any(s => string.Equals(s, j.Current, StringComparison.OrdinalIgnoreCase))) return false;
+                string rel = j.Current.Substring(j.Dest.TrimEnd('\\').Length + 1);
+                int cut = rel.IndexOf('\\');
+                string top = cut < 0 ? rel : rel.Substring(0, cut);
+                string src = j.Sources.FirstOrDefault(s => string.Equals(Path.GetFileName(s.TrimEnd('\\')), top, StringComparison.OrdinalIgnoreCase));
+                if (src == null || j.KeepBoth.Contains(src, StringComparer.OrdinalIgnoreCase)) return false;
+                string from = cut < 0 ? src : Path.Combine(src, rel.Substring(cut + 1));
+                return File.Exists(from) && !SameFile(from, j.Current);
+            }
+            catch { return false; }
+        }
+
+        /// <summary>
         /// Finish a journal's copy / move: the half-written file goes, then whatever is missing (or different) is copied - file by file
         /// inside a folder that was part done. The journal stays until this finishes, so another stop is offered again next time.
         /// </summary>
@@ -129,9 +151,10 @@ namespace vXplorer.Ui
             {
                 await Task.Run(() =>
                 {
-                    // the file that was being written when it stopped is only part there
-                    if (!string.IsNullOrEmpty(j.Current) && Inside(j.Current, j.Dest) && File.Exists(j.Current) &&
-                        !j.Sources.Any(s => string.Equals(s, j.Current, StringComparison.OrdinalIgnoreCase)))
+                    // the file that was being written when it stopped is only part there - but the journal is a second or so behind,
+                    // so the file it names has usually finished since (and after a move is the only copy): it only goes when the
+                    // file it was being made from is still there and isn't the same (HalfWritten)
+                    if (HalfWritten(j))
                     {
                         try { File.Delete(j.Current); Log.Write("Resume: removed the half-written " + j.Current); }
                         catch (Exception ex) { Log.Write("Resume: couldn't remove " + j.Current + ": " + ex.Message); }
@@ -198,9 +221,18 @@ namespace vXplorer.Ui
             Operations.Clear(op);
             if (op.Kind == "copy" || op.Kind == "move")
             {
-                var entries = failed.Where(f => f.DestFolder != null && PathTaken(f.Source)).Select(f => Tuple.Create(f.Source, f.DestFolder)).ToList();
-                if (entries.Count == 0) { Status("Those files aren't there any more."); return; }
-                _ops.TransferEach(entries, op.Kind == "move", op.TargetPath, AfterOperation);
+                var again = failed.Where(f => f.DestFolder != null && PathTaken(f.Source)).ToList();
+                // an item that was a "Keep both" still is: it gets a new name again, never replaces the one that was kept
+                List<string> kept = op.Journal != null ? op.Journal.KeepBoth : new List<string>();
+                var both = again.Where(f => kept.Contains(f.Source, StringComparer.OrdinalIgnoreCase)).ToList();
+                var entries = again.Except(both).Select(f => Tuple.Create(f.Source, f.DestFolder)).ToList();
+                if (again.Count == 0) { Status("Those files aren't there any more."); return; }
+                if (entries.Count > 0) _ops.TransferEach(entries, op.Kind == "move", op.TargetPath, AfterOperation);
+                foreach (var g in both.GroupBy(f => f.DestFolder, StringComparer.OrdinalIgnoreCase))
+                {
+                    List<string> list = g.Select(f => f.Source).ToList();
+                    _ops.Transfer(list, g.Key, op.Kind == "move", list, false, AfterOperation);
+                }
             }
             else
             {
