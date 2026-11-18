@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.57 · pre-release
+## 0.1.57 · release
 
 - Finishing a copy or move that stopped part way no longer deletes a file that had already made it across (after a move, the only copy).
 - Windows' menu (Show more options) on search results from different folders no longer acts on same-named files in the first one's folder: it says they're in different folders. Properties shows each folder's items.
