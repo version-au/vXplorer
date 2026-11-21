@@ -2,6 +2,12 @@
 
 Automated (no window): `dotnet test tests\vXplorer.Tests` - run after every change to `src\Core`.
 
+## 0.1.59: snap layouts on the maximise button
+1. Windows Settings > System > Multitasking > Snap windows on, "Show snap layouts when I hover over a window's maximize button" ticked: rest the pointer on vXplorer's maximise button - Windows' layouts menu opens under it; pick one and the window snaps there. The button lights up while the pointer is on it and goes back when it leaves (also when it leaves fast, off the window).
+2. Click it: maximises; again: restores (the glyph follows). Maximised and on the other monitor: the menu opens at the button.
+3. Untick the setting with vXplorer open: within a few seconds the button is the plain one again (its own hover and tooltip, no menu). Minimise, close and moving the window: as before.
+4. Checked before release: a test copy (its own VXPLORER_DATA_DIR) answers WM_NCHITTEST with 9 (HTMAXBUTTON) only over the maximise button. Automatic: vSuite.Tests `SnapLayoutsTests`.
+
 ## 0.1.58: the glass across monitors
 1. With the window see-through (Blur, Frosted or the wallpaper as it is): drag it slowly from one monitor onto the next and back - smooth, each part showing its own monitor's wallpaper, moving with the window.
 2. Drag it half off a screen's edge: the background keeps moving with it (it used to stop at the edge).

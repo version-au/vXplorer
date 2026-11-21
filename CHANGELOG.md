@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.59
+
+- Windows 11's snap layouts show when the pointer rests on the maximise button, if Windows' setting for them is on (vSuite.Core 1.0.46).
+
 ## 0.1.58 · release
 
 - The see-through background follows the window across monitors and past a screen's edge, and big windows drag smoothly (vSuite.Core 1.0.43).
