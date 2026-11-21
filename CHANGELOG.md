@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.58
+
+- The see-through background follows the window across monitors and past a screen's edge, and big windows drag smoothly (vSuite.Core 1.0.43).
+
 ## 0.1.57 · release
 
 - Finishing a copy or move that stopped part way no longer deletes a file that had already made it across (after a move, the only copy).

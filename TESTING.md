@@ -2,6 +2,11 @@
 
 Automated (no window): `dotnet test tests\vXplorer.Tests` - run after every change to `src\Core`.
 
+## 0.1.58: the glass across monitors
+1. With the window see-through (Blur, Frosted or the wallpaper as it is): drag it slowly from one monitor onto the next and back - smooth, each part showing its own monitor's wallpaper, moving with the window.
+2. Drag it half off a screen's edge: the background keeps moving with it (it used to stop at the edge).
+3. Drag it around one monitor: smooth; let go - it's live at once (hover highlights), text as sharp as before.
+
 ## 0.1.57: speed
 1. `dotnet test tests\vXplorer.Tests`: passes (`NetworkAwayTests` - takes about 4 s).
 2. A folder with 20,000 files: Ctrl+A, then F5, a click on a column header, and a change of view: each is done in a moment and the status line shows the whole selection's count and size.
