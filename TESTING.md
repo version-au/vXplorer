@@ -2,6 +2,13 @@
 
 Automated (no window): `dotnet test tests\vXplorer.Tests` - run after every change to `src\Core`.
 
+## 0.1.59 - signed with the Certum certificate
+1. Before building: SimplySign Desktop connected (its tray icon > Connect, the code from the phone). `build.cmd` says "Signed: vXplorer.exe",
+   then Inno Setup signs the setup and its uninstaller. Not connected: a local build says "Building unsigned"; `build.cmd upload` stops.
+2. dist\setup\vXplorer-setup.exe and the app: right-click > Properties > Digital Signatures - the Certum certificate, with a timestamp.
+   Run the setup: Windows names the publisher (not "Unknown publisher"). After installing, the uninstaller in the app's folder is signed too.
+3. An update from the update site still installs (the site's SHA-256 is of the signed files).
+
 ## 0.1.59: snap layouts on the maximise button
 1. Windows Settings > System > Multitasking > Snap windows on, "Show snap layouts when I hover over a window's maximize button" ticked: rest the pointer on vXplorer's maximise button - Windows' layouts menu opens under it; pick one and the window snaps there. The button lights up while the pointer is on it and goes back when it leaves (also when it leaves fast, off the window).
 2. Click it: maximises; again: restores (the glyph follows). Maximised and on the other monitor: the menu opens at the button.

@@ -14,13 +14,21 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "vSuite.Core\scripts\suite-c
 if errorlevel 1 (echo. & echo BUILD STOPPED - vSuite.Core, see above. & pause & exit /b 1)
 dotnet publish vXplorer.csproj -c Release -r win-x64 --self-contained true -p:PublishSingleFile=true -p:PublishReadyToRun=true -p:IncludeNativeLibrariesForSelfExtract=true -p:DebugType=none -o dist
 if errorlevel 1 (echo. & echo BUILD FAILED - copy the errors above and send them to me. & pause & exit /b 1)
+rem code signing (the Certum certificate, through SimplySign Desktop - connect it first): the app now, so the installer carries the
+rem signed one; Inno Setup signs the setup and its uninstaller (sign.cmd). "nosign" skips it; an upload needs it. vSuite.Core\scripts\sign.ps1
+set SIGN=1
+for %%a in (%*) do if /i "%%~a"=="nosign" set SIGN=
+set SIGNREQ=
+for %%a in (%*) do if /i "%%~a"=="upload" set SIGNREQ=-Require
+if defined SIGN powershell -NoProfile -ExecutionPolicy Bypass -File "vSuite.Core\scripts\sign.ps1" %SIGNREQ% dist\vXplorer.exe
+if defined SIGN if errorlevel 2 (set SIGN=) else if errorlevel 1 (echo. & echo SIGNING FAILED - see above. & pause & exit /b 1)
 echo Built: %~dp0dist\vXplorer.exe
 set ISCC=%LOCALAPPDATA%\Programs\Inno Setup 6\ISCC.exe
 if not exist "%ISCC%" set ISCC=%ProgramFiles(x86)%\Inno Setup 6\ISCC.exe
 rem an older installer is never put up with this version: dist\setup is emptied first
 del /q dist\setup\*.exe 2>nul
 if not defined WANTSETUP (echo No installer this time - nosetup.) else if not exist "%ISCC%" (echo Inno Setup 6 not found - no installer made.) else (
-  "%ISCC%" /Q installer\vXplorer.iss
+  if defined SIGN ("%ISCC%" /Q /DSIGN "/Svsuite=$q%~dp0vSuite.Core\scripts\sign.cmd$q $f" installer\vXplorer.iss) else ("%ISCC%" /Q installer\vXplorer.iss)
   if errorlevel 1 (echo. & echo INSTALLER FAILED - see above. & pause & exit /b 1)
   echo Installer: %~dp0dist\setup\
 )
@@ -37,6 +45,7 @@ rem "build.cmd upload" (with "pre" for a pre-release): dist\site\ straight onto 
 rem (%USERPROFILE%\.ssh\config), latest.json last, then checked over https (vSuite.Core\scripts\site-upload.ps1)
 set UPLOAD=
 for %%a in (%*) do if /i "%%~a"=="upload" set UPLOAD=1
+if defined UPLOAD if not defined SIGN (echo. & echo UPLOAD STOPPED - this build isn't signed. Connect SimplySign Desktop and build again. & pause & exit /b 1)
 if defined UPLOAD powershell -NoProfile -ExecutionPolicy Bypass -File "vSuite.Core\scripts\site-upload.ps1" -Site dist\site
 if defined UPLOAD if errorlevel 1 (echo. & echo UPLOAD FAILED - see above. & pause & exit /b 1)
 echo For the update site: copy everything in %~dp0dist\site\ over the site's root (the files there are replaced).
