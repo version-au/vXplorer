@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.60
+## 0.1.60 · release
 
 - Signed with the developer's code-signing certificate: Windows shows who made the app and its installer instead of "Unknown publisher".
 
