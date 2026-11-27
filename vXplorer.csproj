@@ -12,7 +12,7 @@
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <!-- made by running vXplorer.exe with make-icon (the drawing is src\Ui\Brand.cs), in vShell's default colours; the window's icon follows the theme -->
     <ApplicationIcon>vxplorer.ico</ApplicationIcon>
-    <Version>0.1.59</Version>
+    <Version>0.1.60</Version>
     <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
   </PropertyGroup>
 

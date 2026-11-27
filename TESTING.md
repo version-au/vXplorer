@@ -2,7 +2,7 @@
 
 Automated (no window): `dotnet test tests\vXplorer.Tests` - run after every change to `src\Core`.
 
-## 0.1.59 - signed with the Certum certificate
+## 0.1.60 - signed with the Certum certificate
 1. Before building: SimplySign Desktop connected (its tray icon > Connect, the code from the phone). `build.cmd` says "Signed: vXplorer.exe",
    then Inno Setup signs the setup and its uninstaller. Not connected: a local build says "Building unsigned"; `build.cmd upload` stops.
 2. dist\setup\vXplorer-setup.exe and the app: right-click > Properties > Digital Signatures - the Certum certificate, with a timestamp.

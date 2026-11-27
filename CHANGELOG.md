@@ -1,8 +1,11 @@
 # Changelog
 
-## 0.1.59 · release
+## 0.1.60
 
 - Signed with the developer's code-signing certificate: Windows shows who made the app and its installer instead of "Unknown publisher".
+
+## 0.1.59 · release
+
 - Windows 11's snap layouts show when the pointer rests on the maximise button, if Windows' setting for them is on (vSuite.Core 1.0.46).
 
 ## 0.1.58 · release
